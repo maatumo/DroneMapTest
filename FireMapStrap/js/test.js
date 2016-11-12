@@ -1,5 +1,6 @@
 
-
+//機体名の取得
+var body;
 
 var mymarker;
 var myPos={lat:32.4,lng:130.2};
@@ -25,7 +26,9 @@ var markerData = [];
         markerLatLng = new google.maps.LatLng({lat: markerData[i]['lat'], lng: markerData[i]['lng']}); // 緯度経度のデータ作成
         marker[i] = new google.maps.Marker({ // マーカーの追加
             position: markerLatLng, // マーカーを立てる位置を指定
-            map: map // マーカーを立てる地図を指定
+            map: map, // マーカーを立てる地図を指定
+	        icon: 'drone_mini.png',//アイコン指定
+
         });
  
         infoWindow[i] = new google.maps.InfoWindow({ // 吹き出しの追加
@@ -94,7 +97,6 @@ var markerData = [];
 //Firebase Legacy
 var dataStore;
 dataStore = new Firebase('https://amakusa.firebaseio.com/');
-var body='DJI Phantom';
 var airplanes=dataStore.child('airplanes');
 
 //Get Key
@@ -136,6 +138,7 @@ airplanes.on('value',function(dataSnapShot){
 		marker[i] = new google.maps.Marker({ // マーカーの追加
 		position: markerLatLng, // マーカーを立てる位置を指定
 		map: map, // マーカーを立てる地図を指定
+        icon: 'drone_mini.png',//アイコン指定
 
 		});
 		infoWindow[i] = new google.maps.InfoWindow({ // 吹き出しの追加
@@ -205,4 +208,5 @@ airplanes.on('value',function(dataSnapShot){
 	    // return alert("情報が更新されました");
 	  }
 	};
-//	StartTimer();//タイマースタート
+//	StartTimer();//タイマースタートするか否か
+
