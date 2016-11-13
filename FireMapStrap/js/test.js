@@ -1,10 +1,12 @@
 
 
 var body;
+var bodyType;
 var state=0;//0が観測者モード、1がpilot modeもで自分の位置情報を数秒に一回発信
 if(localStorage){
 	//機体名の取得
 	body=localStorage.getItem('myBodyName');
+	bodyType=localStorage.getItem('myBodyType');
 	if(body){
 		state=1;
 	}
@@ -37,19 +39,22 @@ var markerData = [];
 		pos = new google.maps.LatLng(34.686272,135.519649);
 
 		for (var i = 0; i < markerData.length; i++) {
-        markerLatLng = new google.maps.LatLng({lat: markerData[i]['lat'], lng: markerData[i]['lng']}); // 緯度経度のデータ作成
-        marker[i] = new google.maps.Marker({ // マーカーの追加
-            position: markerLatLng, // マーカーを立てる位置を指定
-            map: map, // マーカーを立てる地図を指定
-	        icon: 'drone_mini.png',//アイコン指定
-
-        });
- 
-        infoWindow[i] = new google.maps.InfoWindow({ // 吹き出しの追加
-            content: '<div class="sample">' + markerData[i]['name'] + '</div>' // 吹き出しに表示する内容
-        });
- 
-        markerEvent(i); // マーカーにクリックイベントを追加
+			var iconType;
+			if(markerData[i]['bodyType']=="Multicopter"){
+				iconType='drone_mini.png';
+			}else if(markerData[i]['bodyType']=="Helicopter"){
+				iconType='heli_mini.png';
+			}
+	        markerLatLng = new google.maps.LatLng({lat: markerData[i]['lat'], lng: markerData[i]['lng']}); // 緯度経度のデータ作成
+    	    marker[i] = new google.maps.Marker({ // マーカーの追加
+        	    position: markerLatLng, // マーカーを立てる位置を指定
+           	 	map: map, // マーカーを立てる地図を指定
+	        	icon: iconType,//アイコン指定
+	        });
+	        infoWindow[i] = new google.maps.InfoWindow({ // 吹き出しの追加
+    	        content: '<div class="sample">' + markerData[i]['name'] + '</div>' // 吹き出しに表示する内容
+        	});
+	        markerEvent(i); // マーカーにクリックイベントを追加
 	    }	 
 
 
@@ -76,10 +81,9 @@ var markerData = [];
 			dataStore.child('airplanes').child(body).update({
 		  		lat: myPos["lat"],
 			  	lng: myPos["lng"],
-			  	bodyType: 'multicopter',
+			  	bodyType: bodyType,
 			  	updateTime: date.getFullYear()  + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds()
-			});
-
+				});
 			}
 		});
 
@@ -138,6 +142,7 @@ airplanes.on('value',function(dataSnapShot){
 	        name: bodyname,
 	        lat: data[bodyname]["lat"],
 	        lng: data[bodyname]["lng"],
+	        bodyType: data[bodyname]["bodyType"],
 	        updateTime: data[bodyname]["updateTime"]
 	    });
 	}
@@ -146,11 +151,17 @@ airplanes.on('value',function(dataSnapShot){
 	}
 	marker=[];
 	for (var i = 0; i < markerData.length; i++) {
+		var iconType;
+		if(markerData[i]['bodyType']=="Multicopter"){
+			iconType='drone_mini.png';
+		}else if(markerData[i]['bodyType']=="Helicopter"){
+			iconType='heli_mini.png';
+		}
 		markerLatLng = new google.maps.LatLng({lat: markerData[i]['lat'], lng: markerData[i]['lng']}); // 緯度経度のデータ作成
 		marker[i] = new google.maps.Marker({ // マーカーの追加
 		position: markerLatLng, // マーカーを立てる位置を指定
 		map: map, // マーカーを立てる地図を指定
-        icon: 'drone_mini.png',//アイコン指定
+        icon: iconType,//アイコン指定
 
 		});
 		infoWindow[i] = new google.maps.InfoWindow({ // 吹き出しの追加
@@ -184,7 +195,7 @@ airplanes.on('value',function(dataSnapShot){
 		dataStore.child('airplanes').child(body).update({
 		  lat: myPos["lat"],
 		  lng: myPos["lng"],
-		  bodyType: 'multicopter',
+		  bodyType: bodyType,
 		  updateTime: date.getFullYear()  + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds()
 		});
 
@@ -200,6 +211,7 @@ airplanes.on('value',function(dataSnapShot){
 		});
 
 		// マーカーのドロップ（ドラッグ終了）時のイベント
+
 		google.maps.event.addListener( mymarker, 'dragend', function(ev){
 			// イベントの引数evの、プロパティ.latLngが緯度経度。
 			myPos["lat"] = ev.latLng.lat();
@@ -207,12 +219,14 @@ airplanes.on('value',function(dataSnapShot){
 
 			setPos(myPos["lat"],myPos["lng"]);
 			var date = new Date();
+						if(state){
 			dataStore.child('airplanes').child(body).update({
-		  	lat: myPos["lat"],
-		  	lng: myPos["lng"],
-		  	bodyType: 'multicopter',
-		  	updateTime: date.getFullYear()  + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds()
-			});
+		  			lat: myPos["lat"],
+			  		lng: myPos["lng"],
+				  	bodyType: bodyType,
+				  	updateTime: date.getFullYear()  + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds()
+				});
+			}
 		});
 
 

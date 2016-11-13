@@ -4,7 +4,7 @@ dataStore = new Firebase('https://amakusa.firebaseio.com/');
 var airplanes=dataStore.child('airplanes');
 
 
-window.onload = function() {
+window.onload = function() {//初期化
   if(localStorage){
     var local=localStorage;
     console.log('localStrage is available!');
@@ -22,6 +22,11 @@ function getBody() {
   body=x;
   localStorage.setItem('myBodyName', x);
   document.getElementById('answer').innerHTML = "Your drone is on Map! : "+localStorage.getItem('myBodyName')+"<input type='button' value='End Mapping' style='float: right' onClick='logOut()'>";
+
+  var y =document.getElementById('bodytype').value;
+  console.log(y);
+  localStorage.setItem('myBodyType', y);
+
 }
 
 function logOut(){
