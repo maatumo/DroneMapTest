@@ -6,6 +6,6 @@ if(localStorage){
 	    console.log(i);
 	    str=str+i;
 	}
-    document.getElementById('localdata').innerHTML = str;
+    document.getElementById('answer').innerHTML = str;
 
 }
