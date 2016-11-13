@@ -12,6 +12,11 @@ if(localStorage){
 
 var myPos={lat:32.4,lng:130.2};
 
+//Firebase Legacy
+var dataStore;
+dataStore = new Firebase('https://amakusa.firebaseio.com/');
+var airplanes=dataStore.child('airplanes');
+
 var mymarker;
 //icons
 var marker = [];
@@ -105,11 +110,6 @@ var markerData = [];
 	}
 
 
-
-//Firebase Legacy
-var dataStore;
-dataStore = new Firebase('https://amakusa.firebaseio.com/');
-var airplanes=dataStore.child('airplanes');
 
 //Get Key
 var gkey;

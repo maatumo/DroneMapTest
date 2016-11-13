@@ -1,3 +1,8 @@
+//Firebase Legacy
+var dataStore;
+dataStore = new Firebase('https://amakusa.firebaseio.com/');
+var airplanes=dataStore.child('airplanes');
+
 
 window.onload = function() {
   if(localStorage){
@@ -22,4 +27,5 @@ function getBody() {
 function logOut(){
   localStorage.clear();
   document.getElementById('answer').innerHTML = localStorage.getItem('myBodyName');
+  dataStore.child('airplanes').child(body).remove();
 }
