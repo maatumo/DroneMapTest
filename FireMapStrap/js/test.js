@@ -1,9 +1,18 @@
 
-//機体名の取得
+
 var body;
+var state=0;//0が観測者モード、1がpilot modeもで自分の位置情報を数秒に一回発信
+if(localStorage){
+	//機体名の取得
+	body=localStorage.getItem('myBodyName');
+	if(body){
+		state=1;
+	}
+}
+
+var myPos={lat:32.4,lng:130.2};
 
 var mymarker;
-var myPos={lat:32.4,lng:130.2};
 //icons
 var marker = [];
 var infoWindow = [];
@@ -58,12 +67,15 @@ var markerData = [];
 			
 			setPos(myPos["lat"],myPos["lng"]);
 			var date = new Date();
+			if(state){
 			dataStore.child('airplanes').child(body).update({
-		  	lat: myPos["lat"],
-		  	lng: myPos["lng"],
-		  	bodyType: 'multicopter',
-		  	updateTime: date.getFullYear()  + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds()
+		  		lat: myPos["lat"],
+			  	lng: myPos["lng"],
+			  	bodyType: 'multicopter',
+			  	updateTime: date.getFullYear()  + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds()
 			});
+
+			}
 		});
 
 
@@ -208,5 +220,7 @@ airplanes.on('value',function(dataSnapShot){
 	    // return alert("情報が更新されました");
 	  }
 	};
-//	StartTimer();//タイマースタートするか否か
+	if (state){
+		StartTimer();//タイマースタートするか否か
+	}
 
