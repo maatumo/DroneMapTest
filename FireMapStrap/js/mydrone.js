@@ -13,6 +13,7 @@ window.onload = function() {//初期化
         document.getElementById('answer').innerHTML = "Your drone is on Map! : "+localStorage.getItem('myBodyName')+"<input type='button' value='End Mapping' style='float: right' onClick='logOut()'>";
       }
   }
+
 };
 
 

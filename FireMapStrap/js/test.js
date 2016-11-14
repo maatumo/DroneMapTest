@@ -1,5 +1,5 @@
 
-
+var file;
 var body;
 var bodyType;
 var state=0;//0が観測者モード、1がpilot modeもで自分の位置情報を数秒に一回発信
@@ -192,13 +192,14 @@ airplanes.on('value',function(dataSnapShot){
 	    // 情報の更新
 	    setPos(myPos["lat"],myPos["lng"]);
 		var date = new Date();
-		dataStore.child('airplanes').child(body).update({
-		  lat: myPos["lat"],
-		  lng: myPos["lng"],
-		  bodyType: bodyType,
-		  updateTime: date.getFullYear()  + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds()
-		});
-
+		if (state){
+			dataStore.child('airplanes').child(body).update({
+			  lat: myPos["lat"],
+			  lng: myPos["lng"],
+			  bodyType: bodyType,
+			  updateTime: date.getFullYear()  + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds()
+			});
+		}
 		//自分の位置のマーカー
 		
 		if(mymarker){		mymarker.setMap(null);}
@@ -229,12 +230,53 @@ airplanes.on('value',function(dataSnapShot){
 			}
 		});
 
+		if(file){//ファイル選択後はこれが発火
+			console.log(file);
+			//FileReaderの作成
+			var reader = new FileReader();
+			//テキスト形式で読み込む
+			reader.readAsText(file[0]);
+			console.log(reader);
+			  
+			//読込終了後の処理
+			reader.onload = function(ev){
+			  //テキストエリアに表示する
+			  var res=reader.result;
+			  console.log(res);
+			  document.getElementById('res').innerHTML = reader.result;
+			  var data= res.split(",");
+			  console.log(data);
+				myPos["lat"] = parseFloat(data[0]);
+				myPos["lng"] = parseFloat(data[1]);
+
+			}
+		}
 
     	StartTimer();
 	    // return alert("情報が更新されました");
 	  }
 	};
-	if (state){
-		StartTimer();//タイマースタートするか否か
-	}
+		
+	StartTimer();//タイマースタートするか否か
+	
 
+
+
+window.onload = function() {//初期化
+	var obj1 = document.getElementById("selfile");
+	//ダイアログでファイルが選択された時
+	obj1.addEventListener("change",function(evt){
+	  console.log("fired");
+	  file = evt.target.files;
+	},false);
+
+};
+
+
+function initFile(){//ファイル初期化
+	file="";
+	var area = document.getElementById('span1');  
+	var temp = area.innerHTML;  
+    document.getElementById('res').innerHTML ="please reload this browser";
+	area.innerHTML = temp; 
+}
