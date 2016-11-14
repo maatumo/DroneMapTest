@@ -30,7 +30,12 @@ function getBody() {
 }
 
 function logOut(){
+  var body = localStorage.getItem('myBodyName');
   localStorage.clear();
   document.getElementById('answer').innerHTML = localStorage.getItem('myBodyName');
-  dataStore.child('airplanes').child(body).remove();
+  console.log("start remove"+body);
+  dataStore.child('airplanes').child(body).remove(function(error){
+    //do stuff after removal
+    console.log("removed");
+  });
 }
