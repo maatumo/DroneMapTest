@@ -275,7 +275,7 @@ airplanes.on('value',function(dataSnapShot){
 		at.innerHTML = "ALERT: <2 mile";
 		at.style.background="#ccff00";
 	}else{
-		at.innerHTML = "Saftey Flight: >2 mile";
+		at.innerHTML = "Safe Flight: >2 mile";
 		at.style.background="#55bbff";
 	}
 
