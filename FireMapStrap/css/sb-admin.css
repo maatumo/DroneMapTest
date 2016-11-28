@@ -8,7 +8,9 @@
 
 body {
     margin-top: 100px;
-    background-color: #222;
+    background-color: #fff;
+/*fixed 2016 11 27*/
+    /*background-color: #222;*/
 }
 
 @media(min-width:768px) {
@@ -123,6 +125,8 @@ ul.alert-dropdown {
         border-radius: 0;
         overflow-y: auto;
         background-color: #222;
+        /*fixed 2016 11 27*/
+        /*background-color: #222;*/
         bottom: 0;
         overflow-x: hidden;
         padding-bottom: 40px;
@@ -135,7 +139,9 @@ ul.alert-dropdown {
     .side-nav li a:hover,
     .side-nav li a:focus {
         outline: none;
-        background-color: #000 !important;
+        background-color: #129 !important;
+/*fixed 2016 11 27*/
+        /*background-color: #000 !important;*/
     }
 }
 
