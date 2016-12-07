@@ -9,7 +9,7 @@ var alertSound1 = new Audio("data:audio/wav;base64," + beep1);
 var alertSound2 = new Audio("data:audio/wav;base64," + beep2);
 debugList=[];
 debugList[3]='test';
-
+var panFlag=0;
 console.log(debugList);
 
 if(localStorage){
@@ -190,7 +190,8 @@ airplanes.on('value',function(dataSnapShot){
 	        lat: data[bodyname]["lat"],
 	        lng: data[bodyname]["lng"],
 	        bodyType: data[bodyname]["bodyType"],
-	        updateTime: data[bodyname]["updateTime"]
+	        updateTime: data[bodyname]["updateTime"],
+	        flightState: data[bodyname]["flightState"]
 	    });
 	}
 	//更新時にマーカーとかを消す http://www.ajaxtower.jp/googlemaps/gmarker/index4.html
@@ -235,7 +236,7 @@ airplanes.on('value',function(dataSnapShot){
 		if(markerData[i]['flightState']=="landing"){
 			each_rad=0;
 		}else if(markerData[i]['bodyType']=="Multicopter"){
-			each_rad=50;
+			each_rad=5;
 		}else if(markerData[i]['bodyType']=="Helicopter"){
 			each_rad=5000;
 		}
@@ -310,7 +311,11 @@ airplanes.on('value',function(dataSnapShot){
 	  if (time > 3) {
 	    StopTimer();
 	    // 情報の更新
-	     setPos(localStorage.getItem('myLat'),localStorage.getItem('myLng'));
+	    if(panFlag){
+	    	console.log("auto pan");
+		     setPos(localStorage.getItem('myLat'),localStorage.getItem('myLng'));
+		}
+
 		var date = new Date();
 		if (state){
 			dataStore.child('airplanes').child(body).update({
@@ -412,6 +417,9 @@ window.onload = function() {//初期化
       document.getElementById('answer').innerHTML = "機体を登録しています! : "+localStorage.getItem('myBodyName')+"<input type='button' value='機体情報を削除' style='float: right' onClick='logOut()'>";
       document.getElementById('drone_form').style.display="none";
 	  document.getElementById('map_contents').style.visibility ="visible";
+      document.getElementById('goal').innerHTML = "ゴールを設定"+"<input type='button' value='ゴールを設定' style='float: right' onClick='setGoal()'>";
+      document.getElementById('autopan').innerHTML = "オートパン切り替え"+"<input type='button' value='切り替え' style='float: right' onClick='autopanOnOff()'>";
+
     }
 	if(localStorage.getItem('flightState')=="flying"){
 	    document.getElementById('alertText').innerHTML = "飛行中"+"<input type='button' value='飛行を中止' style='float: right' onClick='stopFlight()'>";
@@ -458,14 +466,83 @@ function logOut(){
   });
 }
 
+//再度読み込みはやめました
 function startFlight(){
    localStorage.setItem('flightState', 'flying');	
-   location.reload();
+   flight_state=localStorage.getItem('flightState');
+	if(localStorage.getItem('flightState')=="flying"){
+	    document.getElementById('alertText').innerHTML = "飛行中"+"<input type='button' value='飛行を中止' style='float: right' onClick='stopFlight()'>";
+	}else if(localStorage.getItem('flightState')=="landing"){
+	    document.getElementById('alertText').innerHTML = "Landing"+"<input type='button' value='飛行を開始' style='float: right' onClick='startFlight()'>";
+		document.getElementById('alertText').style.background="#d2691e";
+
+	}
+   // location.reload();
 
 }
 
+//再度読み込みはやめました
 function stopFlight(){
    localStorage.setItem('flightState', 'landing');	
-   location.reload();
+   flight_state=localStorage.getItem('flightState');
+	if(localStorage.getItem('flightState')=="flying"){
+	    document.getElementById('alertText').innerHTML = "飛行中"+"<input type='button' value='飛行を中止' style='float: right' onClick='stopFlight()'>";
+	}else if(localStorage.getItem('flightState')=="landing"){
+	    document.getElementById('alertText').innerHTML = "Landing"+"<input type='button' value='飛行を開始' style='float: right' onClick='startFlight()'>";
+		document.getElementById('alertText').style.background="#d2691e";
 
+	}
+   // location.reload();
+
+}
+
+
+function autopanOnOff(){
+	console.log("change pan state");
+	if(panFlag){
+		console.log("OFF");
+		panFlag=0;
+	}else{
+		console.log("ON");
+		panFlag=1;
+	}
+
+}
+
+
+function setGoal(){
+	var goalmarker;
+	goal_image={url:'goal_mini.png',size: new google.maps.Size(50, 50),
+			origin: new google.maps.Point(0, 0),anchor: new google.maps.Point(13, 42)};
+		//自分の位置のマーカー
+		if(goalmarker){		goalmarker.setMap(null);}
+		goalmarkerLatLng = new google.maps.LatLng({lat: 1.0*localStorage.getItem('myLat'), lng: 1.0*localStorage.getItem('myLng')}); // 緯度経度のデータ作成
+		goalmarker = new google.maps.Marker({ // マーカーの追加
+		position: goalmarkerLatLng, // マーカーを立てる位置を指定
+		map: map, // マーカーを立てる地図を指定
+		draggable:true,
+		icon: goal_image,
+		});
+
+		// マーカーのドロップ（ドラッグ終了）時のイベント
+
+		google.maps.event.addListener( goalmarker, 'dragend', function(ev){
+			// イベントの引数evの、プロパティ.latLngが緯度経度。
+			localStorage.setItem('goalLat', String( ev.latLng.lat() ) );
+			localStorage.setItem('goalLng', String( ev.latLng.lng() ) );
+
+			// setPos(localStorage.getItem('myLat'),localStorage.getItem('myLng'));
+			var date = new Date();
+			if(state){
+			dataStore.child('airplanes').child(body).update({
+		  			lat: 1.0*localStorage.getItem('myLat'),
+			  		lng: 1.0*localStorage.getItem('myLng'),
+		  			goalLat: 1.0*localStorage.getItem('goalLat'),
+			  		goalLng: 1.0*localStorage.getItem('goalLng'),
+				  	bodyType: bodyType,
+				  	flightState:flight_state,
+				  	updateTime: date.getFullYear()  + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds()
+				});
+			}
+		});
 }
