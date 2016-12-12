@@ -55,6 +55,10 @@ var	alertAreas2=[];
 			origin: new google.maps.Point(0, 0),anchor: new google.maps.Point(25, 25)};
 		heli_image={url:'heli_mini.png',size: new google.maps.Size(90, 67),
 			origin: new google.maps.Point(0, 0),anchor: new google.maps.Point(45, 33)};
+		drone_image_b={url:'drone_mini_b.png',size: new google.maps.Size(50, 50),
+			origin: new google.maps.Point(0, 0),anchor: new google.maps.Point(25, 25)};
+		heli_image_b={url:'heli_mini_b.png',size: new google.maps.Size(90, 67),
+			origin: new google.maps.Point(0, 0),anchor: new google.maps.Point(45, 33)};
 
 
 
@@ -212,10 +216,14 @@ airplanes.on('value',function(dataSnapShot){
 	cationMessages=[];
 	for (var i = 0; i < markerData.length; i++) {//各機体に関するループ
 		var iconType;
-		if(markerData[i]['bodyType']=="Multicopter"){
+		if(markerData[i]['bodyType']=="Multicopter" && markerData[i]['flightState']=="flying"){
 			iconType=drone_image;
-		}else if(markerData[i]['bodyType']=="Helicopter"){
+		}else if(markerData[i]['bodyType']=="Helicopter" && markerData[i]['flightState']=="flying"){
 			iconType=heli_image;
+		}else if(markerData[i]['bodyType']=="Multicopter"){
+			iconType=drone_image_b;
+		}else if(markerData[i]['bodyType']=="Helicopter"){
+			iconType=heli_image_b;
 		}
 		markerLatLng = new google.maps.LatLng({lat: 1.0*markerData[i]['lat'], lng:1.0* markerData[i]['lng']}); // 緯度経度のデータ作成
 		marker[i] = new google.maps.Marker({ // マーカーの追加
@@ -233,27 +241,30 @@ airplanes.on('value',function(dataSnapShot){
 
 		//危険半径の判定
 		var each_rad;
-		if(markerData[i]['flightState']=="landing"){
-			each_rad=0;
-		}else if(markerData[i]['bodyType']=="Multicopter"){
+		if(markerData[i]['bodyType']=="Multicopter"){
 			each_rad=5;
 		}else if(markerData[i]['bodyType']=="Helicopter"){
-			each_rad=5000;
+			each_rad=8600;
 		}
-		// 危険エリアの表示
+		var each_rad2;
+		if(markerData[i]['bodyType']=="Multicopter"){
+			each_rad2=2;
+		}else if(markerData[i]['bodyType']=="Helicopter"){
+			each_rad2=4750;
+		}		// 危険エリアの表示
 		// 他機との中心間の距離のけいさん
 		//自分の機体の時は発火せず
 		var circle_color='#222222';
 		if(body!=markerData[i]['name']){
 			distance[i] = google.maps.geometry.spherical.computeDistanceBetween(markerLatLng, mymarkerLatLng);
-			if(distance[i]<each_rad/2.){
+			if(distance[i]<each_rad2 && markerData[i]['flightState']!="landing"){
 				alertMessages[i]=markerData[i]['name'];
 				circle_color='#ff0000';
-			}else if(distance[i] >= (each_rad/2.) && distance[i]<each_rad){
+			}else if(distance[i] >= (each_rad2) && distance[i]<each_rad && markerData[i]['flightState']!="landing"){
 				circle_color='#ccff00';
 				cationMessages[i]=markerData[i]['name'];
 			}else{
-				circle_color='#33ccff';				
+				circle_color='#33ccff';
 			}
 			console.log(markerData[i]['name']+" : "+distance[i]);
 		}
@@ -268,6 +279,16 @@ airplanes.on('value',function(dataSnapShot){
 		  strokeOpacity: 1,       // 外周透過度（0: 透明 ⇔ 1:不透明）
 		  strokeWeight: 1         // 外周太さ（ピクセル）
 		});
+		alertAreas2[i]= new google.maps.Circle({
+		  center: markerLatLng,       // 中心点(google.maps.LatLng)
+		  fillColor: circle_color,  // 塗りつぶし色
+		  fillOpacity: 0.2,       // 塗りつぶし透過度（0: 透明 ⇔ 1:不透明）
+		  map: map,        // 表示させる地図（google.maps.Map）
+		  radius: each_rad2,          // 半径（ｍ）
+		  strokeColor: circle_color, // 外周色 
+		  strokeOpacity: 1,       // 外周透過度（0: 透明 ⇔ 1:不透明）
+		  strokeWeight: 1         // 外周太さ（ピクセル）
+		});
 		
 	}
 	console.log("alerts");
@@ -277,16 +298,16 @@ airplanes.on('value',function(dataSnapShot){
 		at.innerHTML = "Landing"+"<input type='button' value='飛行を開始' style='float: right' onClick='startFlight()'>";
 		at.style.background="#d2691e";
 	}else if(alertMessages.length!=0){
-		at.innerHTML = "ALERT: <1 mile [Land Your Drone!]"+"<input type='button' value='飛行を中止' style='float: right' onClick='stopFlight()'>";
+		at.innerHTML = "ALERT Level 2"+"<input type='button' value='飛行を中止' style='float: right' onClick='stopFlight()'>";
 		at.style.background="#ff0000";
 		  // 音を鳴らします
 		alertSound1.play();
 	}else if(cationMessages.length!=0){
-		at.innerHTML = "ALERT: <2 mile"+"<input type='button' value='飛行を中止' style='float: right' onClick='stopFlight()'>";
+		at.innerHTML = "ALERT Level 1"+"<input type='button' value='飛行を中止' style='float: right' onClick='stopFlight()'>";
 		at.style.background="#ccff00";
 		alertSound2.play();
 	}else{
-		at.innerHTML = "Safe Flight: >2 mile"+"<input type='button' value='飛行を中止' style='float: right' onClick='stopFlight()'>";
+		at.innerHTML = "Safe Flight"+"<input type='button' value='飛行を中止' style='float: right' onClick='stopFlight()'>";
 		at.style.background="#55bbff";
 	}
 
