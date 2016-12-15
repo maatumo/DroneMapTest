@@ -28,7 +28,7 @@ var num_prediction=0;
 	var pos;
 	function initMap() {//keyを取得してgoogle maps apiのsourceを取得した後に発火する
 		map = new google.maps.Map(document.getElementById('map'), {
-			center: {lat: 1.0*localStorage.getItem('myLat'), lng: 1.0*localStorage.getItem('myLng')},
+			center: {lat: 32.4, lng: 130.1},
 			zoom: 12
 			}
 		);
