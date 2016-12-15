@@ -152,6 +152,7 @@ airplanes.on('value',function(dataSnapShot){
 	        flightState: data[bodyname]["flightState"],
 	        velocity: data[bodyname]["velocity"],
 	        heading: data[bodyname]["heading"],
+	        prediction: data[bodyname]["prediction"],
 	    });
 	}
 	//更新時にマーカーとかを消す http://www.ajaxtower.jp/googlemaps/gmarker/index4.html
@@ -190,82 +191,38 @@ airplanes.on('value',function(dataSnapShot){
 		var iconType;
 		markerLatLng = new google.maps.LatLng({lat: 1.0*markerData[i]['lat'], lng:1.0* markerData[i]['lng']}); // 緯度経度のデータ作成
 		predictedLatLng= new google.maps.LatLng({lat: 1.0*markerData[i]['lat'], lng:1.0* markerData[i]['lng']}); // 緯度経度のデータ作成
+	
+		//もしpredictionのjsonデータが存在するならそれの代入
+		if(markerData[i]['prediction']){
+			console.log("prediction finded");
+			predictedLatLng= new google.maps.LatLng({lat: 1.0*markerData[i]['prediction']['lat'], lng:1.0* markerData[i]['prediction']['lng']}); // 緯度経度のデータ作成
+		 	// ヘリコプタ位置予想のライン、マーカー
+			var flightPlanCoordinates = [
+				markerLatLng,
+				predictedLatLng
+			];
+			// Polyline オブジェクト
+			predictedPath[num_prediction]=new google.maps.Polyline({
+				path: flightPlanCoordinates, //ポリラインの配列
+				strokeColor: '#2aea19', //色（#RRGGBB形式）
+				strokeOpacity: 1.0, //透明度 0.0～1.0（デフォルト）
+				strokeWeight: 2 ,//太さ（単位ピクセル）
+				map:map,
+			});
+			predictedPos[num_prediction] = new google.maps.Marker({ // マーカーの追加
+				position: predictedLatLng, // マーカーを立てる位置を指定
+				map: map, // マーカーを立てる地図を指定
+		        icon: heli_predicted_image,//アイコン指定
+			});
+			num_prediction=num_prediction+1;
+
+		}
+
+
 		if(markerData[i]['bodyType']=="Multicopter" && markerData[i]['flightState']=="flying"){
 			iconType=drone_image;
 		}else if(markerData[i]['bodyType']=="Helicopter" && markerData[i]['flightState']=="flying"){//飛行中のヘリコプタ
 			iconType=heli_image;
-			//ヘリコプター予測処理
-			console.log("heliPrediction");
-			console.log(heliPrediction);
-			if(markerData[i]['name'] in heliPrediction　&& Object.keys(heliPrediction[markerData[i]['name']]['predicts']).length<12){//もうあるとき
-				if(heliPrediction[markerData[i]['name']].velocity==markerData[i]['velocity'] && heliPrediction[markerData[i]['name']].heading==markerData[i]['heading']&& heliPrediction[markerData[i]['name']].lat==markerData[i]['lat']&&heliPrediction[markerData[i]['name']].lng==markerData[i]['lng']){
-					//
-					var diff=milliseconds-heliPrediction[markerData[i]['name']].localUpdateTime;
-					if(diff >10000. ){//12個以上のpredictionになったら強制初期化
-						console.log("predict!");
-						var preTimeStamp=String(heliPrediction[markerData[i]['name']].localUpdateTime);
-						var nextPos={};
-						if(preTimeStamp in heliPrediction[markerData[i]['name']]["predicts"]){//second or later prediction
-							nextPos=predictHeliPos(markerData[i]['velocity'],markerData[i]['heading'],heliPrediction[markerData[i]['name']]["predicts"][preTimeStamp]["lat"],heliPrediction[markerData[i]['name']]["predicts"][preTimeStamp]["lng"],diff);
-						}else{//first prediction
-							nextPos=predictHeliPos(markerData[i]['velocity'],markerData[i]['heading'],markerData[i]['lat'],markerData[i]['lng'],diff);
-						}
-						console.log("nextPos");
-						console.log(nextPos);
-						heliPrediction[markerData[i]['name']]["predicts"][String(milliseconds)]={
-							lat:nextPos["nextLat"],
-							lng:nextPos["nextLng"],
-						};
-						heliPrediction[markerData[i]['name']]["localUpdateTime"]=milliseconds;
-					}
-				}else{
-					heliPrediction[markerData[i]['name']]={
-						velocity:markerData[i]['velocity'],
-						heading:markerData[i]['heading'],
-						lat:markerData[i]['lat'],
-						lng:markerData[i]['lng'],
-						localUpdateTime:milliseconds,
-						predicts:{},
-					};
-				}
-			}else{//まだないとき
-				heliPrediction[markerData[i]['name']]={
-					velocity:markerData[i]['velocity'],
-					heading:markerData[i]['heading'],
-					lat:markerData[i]['lat'],
-					lng:markerData[i]['lng'],
-					localUpdateTime:milliseconds,
-					predicts:{},
-				};
-			};
-			if(Object.keys(heliPrediction[markerData[i]['name']]['predicts']).length){//予測位置情報があるとき
-				console.log("predicted heli list");
-				var heliList=Object.keys(heliPrediction[markerData[i]['name']]['predicts']);
-				console.log(heliList);
-				uptodateTimeStamp=heliList[heliList.length-1];
-				predictedLatLng= new google.maps.LatLng({lat: 1.0*heliPrediction[markerData[i]['name']]["predicts"][uptodateTimeStamp]['lat'], lng:1.0*heliPrediction[markerData[i]['name']]["predicts"][uptodateTimeStamp]['lng'] }); // 緯度経度のデータ作成
-				// ヘリコプタ位置予想のライン、マーカー
-				if(markerLatLng != predictedLatLng){//まずは位置予想を使うか判定
-					var flightPlanCoordinates = [
-						markerLatLng,
-						predictedLatLng
-					];
-					// Polyline オブジェクト
-					predictedPath[num_prediction]=new google.maps.Polyline({
-						path: flightPlanCoordinates, //ポリラインの配列
-						strokeColor: '#2aea19', //色（#RRGGBB形式）
-						strokeOpacity: 1.0, //透明度 0.0～1.0（デフォルト）
-						strokeWeight: 2 ,//太さ（単位ピクセル）
-						map:map,
-					});
-					predictedPos[num_prediction] = new google.maps.Marker({ // マーカーの追加
-						position: predictedLatLng, // マーカーを立てる位置を指定
-						map: map, // マーカーを立てる地図を指定
-				        icon: heli_predicted_image,//アイコン指定
-					});
-					num_prediction=num_prediction+1;
-				}
-			}
 			//ヘリコプター予測処理終わり
 		}else if(markerData[i]['bodyType']=="Multicopter"){
 			iconType=drone_image_b;
@@ -302,13 +259,20 @@ airplanes.on('value',function(dataSnapShot){
 		var circle_color='#222222';
 		for (var net_i = 0; net_i < markerData.length; net_i++) {
 			if(i!=net_i){
-				if(markerData[net_i]['name'] in heliPrediction　&& Object.keys(heliPrediction[markerData[net_i]['name']]['predicts']).length>0){//predictデータがあるとき
-					var heliList=Object.keys(heliPrediction[markerData[net_i]['name']]['predicts']);
-					uptodateTimeStamp=heliList[heliList.length-1];
-					otherMarkerLatLng= new google.maps.LatLng({lat: 1.0*heliPrediction[markerData[net_i]['name']]["predicts"][uptodateTimeStamp]['lat'], lng:1.0*heliPrediction[markerData[net_i]['name']]["predicts"][uptodateTimeStamp]['lng'] }); // 緯度経度のデータ作成
+				if(markerData[net_i]['prediction']){
+				 	otherMarkerLatLng= new google.maps.LatLng({lat: 1.0*markerData[net_i]['prediction']['lat'], lng:1.0*markerData[net_i]['prediction']['lng'] }); // 緯度経度のデータ作成
+				}else{
+				 	otherMarkerLatLng= new google.maps.LatLng({lat: 1.0*markerData[net_i]['lat'], lng:1.0*markerData[net_i]['lng'] }); // 緯度経度のデータ作成
 				}
-				otherMarkerLatLng = new google.maps.LatLng({lat: 1.0*markerData[net_i]['lat'], lng:1.0* markerData[net_i]['lng']}); // 緯度経度のデータ作成
 				distance[net_i] = google.maps.geometry.spherical.computeDistanceBetween(predictedLatLng, otherMarkerLatLng);
+				//まず自分がプレディクションあるかどうか
+				// if(markerData[net_i]['name'] in heliPrediction　&& Object.keys(heliPrediction[markerData[net_i]['name']]['predicts']).length>0){//predictデータがあるとき
+				// 	var heliList=Object.keys(heliPrediction[markerData[net_i]['name']]['predicts']);
+				// 	uptodateTimeStamp=heliList[heliList.length-1];
+				// 	otherMarkerLatLng= new google.maps.LatLng({lat: 1.0*heliPrediction[markerData[net_i]['name']]["predicts"][uptodateTimeStamp]['lat'], lng:1.0*heliPrediction[markerData[net_i]['name']]["predicts"][uptodateTimeStamp]['lng'] }); // 緯度経度のデータ作成
+				// }
+				// otherMarkerLatLng = new google.maps.LatLng({lat: 1.0*markerData[net_i]['lat'], lng:1.0* markerData[net_i]['lng']}); // 緯度経度のデータ作成
+				// distance[net_i] = google.maps.geometry.spherical.computeDistanceBetween(predictedLatLng, otherMarkerLatLng);
 			}
 			if(distance[net_i]<each_rad2 && markerData[net_i]['flightState']!="landing"&& markerData[i]['flightState']!="landing"){
 				circle_color='#ff0000';
@@ -346,6 +310,7 @@ airplanes.on('value',function(dataSnapShot){
 		
 	}
 });
+
 
 
 function predictHeliPos(vel,heading,lat,lng,millisec){//位置予想（速度はknot, 時間はmilliseconds）
